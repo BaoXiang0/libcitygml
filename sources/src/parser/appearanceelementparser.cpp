@@ -73,7 +73,7 @@ namespace citygml {
     {
         if (node == NodeType::APP_ThemeNode) {
             return true;
-        } else if (node == NodeType::APP_SurfaceDataMemberNode || node == NodeType::APP_SurfaceDataNode) {
+        } else if (node == NodeType::APP_SurfaceDataMemberNode) {
 
             if (attributes.hasXLinkAttribute()) {
                 // surfaceDataMemberNode links to an existing surfaceData member
@@ -112,7 +112,7 @@ namespace citygml {
             }
             m_theme = characters;
             return true;
-        } else if (node == NodeType::APP_SurfaceDataMemberNode || node == NodeType::APP_SurfaceDataNode) {
+        } else if (node == NodeType::APP_SurfaceDataMemberNode) {
             return true;
         }
         return GMLObjectElementParser::parseChildElementEndTag(node, characters);

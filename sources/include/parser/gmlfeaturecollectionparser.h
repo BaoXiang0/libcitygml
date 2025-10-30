@@ -16,13 +16,13 @@ namespace citygml {
 
     protected:
         // CityGMLElementParser interface
-        bool parseChildElementStartTag(const NodeType::XMLNode& node, Attributes& attributes) override;
-        bool parseChildElementEndTag(const NodeType::XMLNode& node, const std::string& characters) override;
+        virtual bool parseChildElementStartTag(const NodeType::XMLNode& node, Attributes& attributes) override;
+        virtual bool parseChildElementEndTag(const NodeType::XMLNode& node, const std::string& characters) override;
 
         virtual FeatureObject* getFeatureObject() = 0;
 
         // GMLObjectElementParser interface
-        Object* getObject() override;
+        virtual Object* getObject() override;
 
         const Envelope& getEnvelope() const;
         bool getSourceSRSOverride() const;

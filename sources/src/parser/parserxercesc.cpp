@@ -17,7 +17,6 @@
 #include <citygml/citygml.h>
 #include <citygml/citygmllogger.h>
 
-#include <atomic>
 #include <fstream>
 #include <string>
 #include <memory>
@@ -77,14 +76,14 @@ public:
     }
 
     // DocumentLocation interface
-    const std::string& getDocumentFileName() const override {
+    virtual const std::string& getDocumentFileName() const {
         return m_fileName;
     }
 
-    uint64_t getCurrentLine() const override {
+    virtual uint64_t getCurrentLine() const {
         return m_locator != nullptr ? m_locator->getLineNumber() : 0;
     }
-    uint64_t getCurrentColumn() const override {
+    virtual uint64_t getCurrentColumn() const {
         return m_locator != nullptr ? m_locator->getColumnNumber() : 0;
     }
 
@@ -99,13 +98,13 @@ public:
      : citygml::Attributes(logger), m_attrs(attrs), m_location(docLoc) {}
 
     // Attributes interface
-    std::string getAttribute(const std::string& attname, const std::string& defvalue) const override {
+    virtual std::string getAttribute(const std::string& attname, const std::string& defvalue) const {
         std::shared_ptr<XMLCh> name = toXercesString(attname);
         std::string value = toStdString(m_attrs.getValue(name.get()));
         return value.empty() ? defvalue : value;
     }
 
-    const DocumentLocation& getDocumentLocation() const override {
+    virtual const DocumentLocation& getDocumentLocation() const {
         return m_location;
     }
 
@@ -123,36 +122,36 @@ public:
 
 
     // ContentHandler interface
-    void startElement(const XMLCh* const, const XMLCh* const, const XMLCh* const qname, const xercesc::Attributes& attrs) override {
+    virtual void startElement(const XMLCh* const, const XMLCh* const, const XMLCh* const qname, const xercesc::Attributes& attrs) override {
         AttributesXercesAdapter attributes(attrs, m_documentLocation, m_logger);
         // We need to empty m_lastcharacters here, because if a tag is empty, characters(...) will never be called and this variable will contain wrong values
         m_lastcharacters = "";
         CityGMLDocumentParser::startElement(toStdString(qname), attributes);
     }
 
-    void endElement(const XMLCh* const, const XMLCh* const, const XMLCh* const qname) override {
+    virtual void endElement(const XMLCh* const, const XMLCh* const, const XMLCh* const qname) override {
         CityGMLDocumentParser::endElement(toStdString(qname), m_lastcharacters);
         m_lastcharacters = "";
     }
 
-    void characters(const XMLCh* const chars, const XMLSize_t) override {
+    virtual void characters(const XMLCh* const chars, const XMLSize_t) override {
         m_lastcharacters += toStdString(chars);
     }
 
-    void startDocument() override {
+    virtual void startDocument() override {
         CityGMLDocumentParser::startDocument();
     }
 
-    void endDocument() override {
+    virtual void endDocument() override {
         CityGMLDocumentParser::endDocument();
     }
 
-    void setDocumentLocator(const xercesc::Locator* const locator) override {
+    virtual void setDocumentLocator(const xercesc::Locator* const locator) override {
         m_documentLocation.setLocator(locator);
     }
 
     // CityGMLDocumentParser interface
-    const citygml::DocumentLocation& getDocumentLocation() const override {
+    virtual const citygml::DocumentLocation& getDocumentLocation() const override {
         return m_documentLocation;
     }
 protected:
@@ -166,11 +165,11 @@ class StdBinInputStream : public xercesc::BinInputStream
 public:
     explicit StdBinInputStream( std::istream& stream ) : BinInputStream(), m_stream( stream ) {}
 
-    ~StdBinInputStream() override {}
+    virtual ~StdBinInputStream() {}
 
-    XMLFilePos curPos() const override { return m_stream.tellg(); }
+    virtual XMLFilePos curPos() const { return m_stream.tellg(); }
 
-    XMLSize_t readBytes( XMLByte* const buf, const XMLSize_t maxToRead ) override
+    virtual XMLSize_t readBytes( XMLByte* const buf, const XMLSize_t maxToRead )
     {
         assert( sizeof(XMLByte) == sizeof(char) );
         if ( !m_stream ) return 0;
@@ -178,7 +177,7 @@ public:
         return (XMLSize_t)m_stream.gcount();
     }
 
-    const XMLCh* getContentType() const override { return nullptr; }
+    virtual const XMLCh* getContentType() const { return nullptr; }
 
 private:
     std::istream& m_stream;
@@ -189,12 +188,12 @@ class StdBinInputSource : public xercesc::InputSource
 public:
     explicit StdBinInputSource( std::istream& stream ) : m_stream( stream ) {}
 
-    xercesc::BinInputStream* makeStream() const override
+    virtual xercesc::BinInputStream* makeStream() const
     {
         return new StdBinInputStream( m_stream );
     }
 
-    ~StdBinInputSource() override {
+    ~StdBinInputSource() {
     }
 
 private:
@@ -212,7 +211,7 @@ namespace citygml
 
         };
 
-        void log(LOGLEVEL level, const std::string& message, const char* file, int line) const override
+        virtual void log(LOGLEVEL level, const std::string& message, const char* file, int line) const
         {
             std::ostream& stream = level == LOGLEVEL::LL_ERROR ? std::cerr : std::cout;
 
@@ -247,21 +246,22 @@ namespace citygml
     };
 
     std::mutex xerces_init_mutex;
-    std::atomic_bool xerces_initialized;
+    bool xerces_initialized;
 
     bool initXerces(std::shared_ptr<CityGMLLogger> logger) {
 
-        if (xerces_initialized.load()) {
+        if (xerces_initialized) {
             return true;
         }
 
         try {
-            std::lock_guard<std::mutex> lock(xerces_init_mutex);
+            xerces_init_mutex.lock();
             // Check xerces_initialized again... it could have changed while waiting for the mutex
-            if (!xerces_initialized.load()) {
+            if (!xerces_initialized) {
                 xercesc::XMLPlatformUtils::Initialize();
-                xerces_initialized.exchange(true);
+                xerces_initialized = true;
             }
+            xerces_init_mutex.unlock();
         }
         catch (const xercesc::XMLException& e) {
             CITYGML_LOG_ERROR(logger, "Could not initialize xercesc XMLPlatformUtils, a XML Exception occurred : " << toStdString(e.getMessage()));
@@ -304,24 +304,12 @@ namespace citygml
         }
 #endif
 
-            delete parser;
+        delete parser;
 
         return handler.getModel();
     }
 
-    inline std::unique_ptr<StdBinInputSource> createInputSource(std::istream& stream)
-    {
-        return std::unique_ptr<StdBinInputSource>(new StdBinInputSource(stream));
-    }
-
-    inline std::unique_ptr<xercesc::LocalFileInputSource> createInputSource(const std::string& fname)
-    {
-        std::shared_ptr<XMLCh> fileName = toXercesString(fname);
-        return std::unique_ptr<xercesc::LocalFileInputSource>(new xercesc::LocalFileInputSource(fileName.get()));
-    }
-
-    template <typename T>
-    std::shared_ptr<const CityModel> loadInternal(T& input, const ParserParams& params, std::unique_ptr<TesselatorBase>& tesselator, std::shared_ptr<CityGMLLogger>& logger)
+    std::shared_ptr<const CityModel> load(std::istream& stream, const ParserParams& params, std::unique_ptr<TesselatorBase> tesselator, std::shared_ptr<CityGMLLogger> logger)
     {
         if (!logger) {
             logger = std::make_shared<StdLogger>();
@@ -334,27 +322,37 @@ namespace citygml
             return nullptr;
         }
 
-#ifdef NDEBUG
-        try {
-#endif
-            std::unique_ptr<xercesc::InputSource> source = createInputSource(input);
-            return parse(*source, params, logger, std::move(tesselator));
-#ifdef NDEBUG
-        } catch (xercesc::XMLException& e) {
-            CITYGML_LOG_ERROR(logger, "Error parsing file: " << e.getMessage());
-            return nullptr;
-        }
-#endif
-    }
-
-    std::shared_ptr<const CityModel> load(std::istream& stream, const ParserParams& params, std::unique_ptr<TesselatorBase> tesselator, std::shared_ptr<CityGMLLogger> logger)
-    {
-        return loadInternal(stream, params, tesselator, logger);
+        StdBinInputSource streamSource(stream);
+        return parse(streamSource, params, logger, std::move(tesselator));
     }
 
     std::shared_ptr<const CityModel> load( const std::string& fname, const ParserParams& params, std::unique_ptr<TesselatorBase> tesselator, std::shared_ptr<CityGMLLogger> logger)
     {
-        return loadInternal(fname, params, tesselator, logger);
+        if (!logger) {
+            logger = std::make_shared<StdLogger>();
+            if(tesselator) {
+                tesselator->setLogger(logger);
+            }
+        }
+
+        if (!initXerces(logger)) {
+            return nullptr;
+        }
+
+        std::shared_ptr<XMLCh> fileName = toXercesString(fname);
+
+#ifdef NDEBUG
+        try {
+#endif
+            xercesc::LocalFileInputSource fileSource(fileName.get());
+            return parse(fileSource, params, logger, std::move(tesselator), fname);
+#ifdef NDEBUG
+        } catch (xercesc::XMLException& e) {
+            CITYGML_LOG_ERROR(logger, "Error parsing file " << fname << ": " << e.getMessage());
+            return nullptr;
+        }
+#endif
+
     }
 }
 

@@ -4,7 +4,6 @@
 #include <map>
 
 #include <citygml/citygml_api.h>
-#include <citygml/warnings.h>
 
 namespace citygml
 {
@@ -46,9 +45,7 @@ public:
     int asInteger(int defaultValue=0) const;
 private:
     AttributeType m_type;
-    PRAGMA_WARN_DLL_BEGIN
     std::string m_value;
-    PRAGMA_WARN_DLL_END
 };
 
 LIBCITYGML_EXPORT std::ostream& operator<<(std::ostream& os, const AttributeValue& o);

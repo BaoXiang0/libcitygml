@@ -39,16 +39,16 @@ namespace citygml {
          * @return true if the node was expected otherwise false
          * @note the CityGMLDocumentParser calls this method
          */
-        bool startElement(const NodeType::XMLNode& node, Attributes& attributes) override;
+        virtual bool startElement(const NodeType::XMLNode& node, Attributes& attributes) override;
 
         /**
          * @brief must be called for each xml tag that ends a child of the elements handeld by this parser or ends one of the elements itself
          * @return true if the node was expected otherwise false
          * @note the CityGMLDocumentParser calls this method
          */
-        bool endElement(const NodeType::XMLNode& node, const std::string& characters ) override;
+        virtual bool endElement(const NodeType::XMLNode& node, const std::string& characters ) override;
 
-        ~CityGMLElementParser() override;
+        virtual ~CityGMLElementParser();
 
     protected:
 
@@ -82,7 +82,6 @@ namespace citygml {
         CityGMLFactory& m_factory;
     private:
         NodeType::XMLNode m_boundElement;
-        NodeType::XMLNode m_skippedElement;
     };
 
 }

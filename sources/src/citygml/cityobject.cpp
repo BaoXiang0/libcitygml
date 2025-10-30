@@ -9,51 +9,9 @@
 #include <unordered_map>
 #include <algorithm>
 
+ENUM_CLASS_BITWISE_OPERATORS(citygml::CityObject::CityObjectsType);
 
 namespace citygml {
-
-    CityObjectsTypeMask toMask(CityObject::CityObjectsType value) { /* constexpr with C++23*/
-        CityObjectsTypeMask result;
-        if (value == CityObject::CityObjectsType::COT_All) {
-            result = ~result;
-        } else {
-            result.set(static_cast<size_t>(value));
-        }
-        return result;
-    }
-
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator|(CityObject::CityObjectsType l, CityObject::CityObjectsType r) { /* constexpr with C++23*/
-        return toMask(l) | toMask(r);
-    }
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator&(CityObject::CityObjectsType l, CityObject::CityObjectsType r) { /* constexpr with C++23*/
-        return toMask(l) & toMask(r);
-    }
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator^(CityObject::CityObjectsType l, CityObject::CityObjectsType r) { /* constexpr with C++23*/
-        return toMask(l) ^ toMask(r);
-    }
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator~(CityObject::CityObjectsType l) { /* constexpr with C++23*/
-        return ~toMask(l);
-    }
-
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator|(CityObjectsTypeMask l, CityObject::CityObjectsType r) { /* constexpr with C++23*/
-        return l | toMask(r);
-    }
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator&(CityObjectsTypeMask l, CityObject::CityObjectsType r) { /* constexpr with C++23*/
-        return l & toMask(r);
-    }
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator^(CityObjectsTypeMask l, CityObject::CityObjectsType r) { /* constexpr with C++23*/
-        return l ^ toMask(r);
-    }
-
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator|(CityObject::CityObjectsType l, CityObjectsTypeMask r) { /* constexpr with C++23*/
-        return toMask(l) | r;
-    }
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator&(CityObject::CityObjectsType l, CityObjectsTypeMask r) { /* constexpr with C++23*/
-        return toMask(l) & r;
-    }
-    LIBCITYGML_EXPORT CityObjectsTypeMask operator^(CityObject::CityObjectsType l, CityObjectsTypeMask r) { /* constexpr with C++23*/
-        return toMask(l) ^ r;
-    }
 
     CityObject::CityObject(const std::string& id, CityObject::CityObjectsType type)  : FeatureObject( id ), m_type( type )
     {
@@ -72,7 +30,7 @@ namespace citygml {
 
     unsigned int CityObject::getGeometriesCount() const
     {
-        return static_cast<unsigned int>(m_geometries.size());
+        return m_geometries.size();
     }
 
     const Geometry& CityObject::getGeometry(unsigned int i) const
@@ -92,7 +50,7 @@ namespace citygml {
 
     unsigned int CityObject::getImplicitGeometryCount() const
     {
-        return static_cast<unsigned int>(m_implicitGeometries.size());
+        return m_implicitGeometries.size();
     }
 
     const ImplicitGeometry& CityObject::getImplicitGeometry(unsigned int i) const
@@ -107,12 +65,12 @@ namespace citygml {
 
     void CityObject::addImplictGeometry(ImplicitGeometry* implictGeom)
     {
-		m_implicitGeometries.push_back(std::unique_ptr<ImplicitGeometry>(implictGeom));
+        m_implicitGeometries.push_back(std::unique_ptr<ImplicitGeometry>(implictGeom));
     }
 
     unsigned int CityObject::getChildCityObjectsCount() const
     {
-        return static_cast<unsigned int>(m_children.size());
+        return m_children.size();
     }
 
     const CityObject& CityObject::getChildCityObject(unsigned int i) const
@@ -127,11 +85,7 @@ namespace citygml {
 
     void CityObject::addChildCityObject(CityObject* cityObj)
     {
-		// don't add empty nodes as children
-		if(cityObj!=NULL)
-		{
-            m_children.push_back(std::unique_ptr<CityObject>(cityObj));
-		}
+        m_children.push_back(std::unique_ptr<CityObject>(cityObj));
     }
 
     const Address* CityObject::address() const
@@ -167,7 +121,7 @@ namespace citygml {
         }
 
         for (std::unique_ptr<ImplicitGeometry>& implictGeom : m_implicitGeometries) {
-            for (unsigned int i = 0; i < implictGeom->getGeometriesCount(); i++) {
+            for (int i = 0; i < implictGeom->getGeometriesCount(); i++) {
                 implictGeom->getGeometry(i).finish(tesselator, optimize, logger);
             }
         }
@@ -215,10 +169,6 @@ namespace citygml {
             return "BuildingInstallation";
         case CityObject::CityObjectsType::COT_BuildingFurniture:
             return "BuildingFurniture";
-        case CityObject::CityObjectsType::COT_BuildingConstructiveElement:
-            return "BuildingConstructiveElement";
-        case CityObject::CityObjectsType::COT_BuildingRoom:
-            return "BuildingRoom";
         case CityObject::CityObjectsType::COT_Door:
             return "Door";
         case CityObject::CityObjectsType::COT_Window:
@@ -233,12 +183,6 @@ namespace citygml {
             return "Railway";
         case CityObject::CityObjectsType::COT_Square:
             return "Square";
-        case CityObject::CityObjectsType::COT_Intersection:
-            return "Intersection";
-        case CityObject::CityObjectsType::COT_Section:
-            return "Section";
-        case CityObject::CityObjectsType::COT_Waterway:
-            return "Waterway";
         case CityObject::CityObjectsType::COT_PlantCover:
             return "PlantCover";
         case CityObject::CityObjectsType::COT_SolitaryVegetationObject:
@@ -282,13 +226,7 @@ namespace citygml {
         case CityObject::CityObjectsType::COT_TransportationObject:
             return "TransportationObject";
         case CityObject::CityObjectsType::COT_IntBuildingInstallation:
-	        return "IntBuildingInstallation";
-        case CityObject::CityObjectsType::COT_GenericOccupiedSpace:
-	        return "GenericOccupiedSpace";
-        case CityObject::CityObjectsType::COT_GenericUnoccupiedSpace:
-	        return "GenericUnoccupiedSpace";
-        case CityObject::CityObjectsType::COT_GenericLogicalSpace:
-	        return "GenericLogicalSpace";
+	    return "IntBuildingInstallation";
         default:
             return "Unknown";
         }
@@ -306,8 +244,6 @@ namespace citygml {
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Room), CityObject::CityObjectsType::COT_Room},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_BuildingInstallation), CityObject::CityObjectsType::COT_BuildingInstallation},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_BuildingFurniture), CityObject::CityObjectsType::COT_BuildingFurniture},
-         {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_BuildingConstructiveElement), CityObject::CityObjectsType::COT_BuildingConstructiveElement},
-         {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_BuildingRoom), CityObject::CityObjectsType::COT_BuildingRoom},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Door), CityObject::CityObjectsType::COT_Door},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Window), CityObject::CityObjectsType::COT_Window},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_CityFurniture), CityObject::CityObjectsType::COT_CityFurniture},
@@ -315,9 +251,6 @@ namespace citygml {
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Road), CityObject::CityObjectsType::COT_Road},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Railway), CityObject::CityObjectsType::COT_Railway},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Square), CityObject::CityObjectsType::COT_Square},
-         {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Intersection), CityObject::CityObjectsType::COT_Intersection},
-         {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Section), CityObject::CityObjectsType::COT_Section},
-         {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_Waterway), CityObject::CityObjectsType::COT_Waterway},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_PlantCover), CityObject::CityObjectsType::COT_PlantCover},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_SolitaryVegetationObject), CityObject::CityObjectsType::COT_SolitaryVegetationObject},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_WaterBody), CityObject::CityObjectsType::COT_WaterBody},
@@ -339,10 +272,7 @@ namespace citygml {
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_OuterCeilingSurface), CityObject::CityObjectsType::COT_OuterCeilingSurface},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_OuterFloorSurface), CityObject::CityObjectsType::COT_OuterFloorSurface},
          {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_TransportationObject), CityObject::CityObjectsType::COT_TransportationObject},
-	     {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_IntBuildingInstallation), CityObject::CityObjectsType::COT_IntBuildingInstallation},
-         {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_GenericOccupiedSpace), CityObject::CityObjectsType::COT_GenericOccupiedSpace},
-         {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_GenericUnoccupiedSpace), CityObject::CityObjectsType::COT_GenericUnoccupiedSpace},
-         {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_GenericLogicalSpace), CityObject::CityObjectsType::COT_GenericLogicalSpace}
+	 {cityObjectsTypeToLowerString(CityObject::CityObjectsType::COT_IntBuildingInstallation), CityObject::CityObjectsType::COT_IntBuildingInstallation}
     };
 
     CityObject::CityObjectsType cityObjectsTypeFromString(const std::string& s, bool& valid)

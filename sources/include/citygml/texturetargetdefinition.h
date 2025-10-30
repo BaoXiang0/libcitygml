@@ -6,7 +6,6 @@
 #include <citygml/citygml_api.h>
 #include <citygml/appearancetargetdefinition.h>
 #include <citygml/texture.h>
-#include <citygml/warnings.h>
 
 namespace citygml {
 
@@ -47,9 +46,7 @@ namespace citygml {
 
     protected:
         TextureTargetDefinition(const std::string& targetID, std::shared_ptr<Texture> appearance, const std::string& id);
-        PRAGMA_WARN_DLL_BEGIN
         std::vector<std::shared_ptr<TextureCoordinates> > m_coordinatesList;
         std::unordered_map<std::string, std::shared_ptr<TextureCoordinates> > m_idTexCoordMap;
-        PRAGMA_WARN_DLL_END
     };
 }

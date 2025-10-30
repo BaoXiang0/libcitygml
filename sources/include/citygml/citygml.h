@@ -32,7 +32,6 @@
 #include <citygml/cityobject.h>
 #include <citygml/envelope.h>
 #include <citygml/tesselatorbase.h>
-#include <citygml/warnings.h>
 
 namespace citygml
 {
@@ -42,6 +41,8 @@ namespace citygml
     class Texture;
     class Material;
     class AppearanceManager;
+
+    typedef EnumClassBitmask<CityObject::CityObjectsType> CityObjectsTypeMask;
 
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -62,7 +63,7 @@ namespace citygml
     {
     public:
         ParserParams()
-            : objectsMask(~CityObjectsTypeMask{})
+            : objectsMask(CityObject::CityObjectsType::COT_All)
             , minLOD( 0 )
             , maxLOD( 4 )
             , optimize( false )
@@ -74,36 +75,85 @@ namespace citygml
         { }
 
     public:
-        template <typename New, typename Old, New (*Transform)(Old)>
-        class LegacyAssignable {
-        public:
-            LegacyAssignable(New const& val) : value(val) {}
-            New& operator=(New const& val) { value = val; return value; }
-            [[deprecated]] Old operator=(Old val) { value = Transform(val); return val; }
-            New const& operator->() const { return value; }
-            New const& get() const { return value; }
-            operator New const&() const { return value; }
-        private:
-            New value;
-        };
-
-        PRAGMA_WARN_DLL_BEGIN
-        LegacyAssignable<CityObjectsTypeMask, CityObject::CityObjectsType, toMask> objectsMask;
-        PRAGMA_WARN_DLL_END
+        CityObjectsTypeMask objectsMask;
         unsigned int minLOD;
         unsigned int maxLOD;
         bool optimize;
         bool pruneEmptyObjects;
         bool tesselate;
         bool keepVertices;
-        PRAGMA_WARN_DLL_BEGIN
         std::string destSRS;
         std::string srcSRS;
-        PRAGMA_WARN_DLL_END
     };
 
     LIBCITYGML_EXPORT std::shared_ptr<const CityModel> load( std::istream& stream, const ParserParams& params, std::unique_ptr<TesselatorBase> tesselator, std::shared_ptr<CityGMLLogger> logger = nullptr);
 
     LIBCITYGML_EXPORT std::shared_ptr<const CityModel> load( const std::string& fileName, const ParserParams& params, std::unique_ptr<TesselatorBase> tesselator, std::shared_ptr<CityGMLLogger> logger = nullptr);
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Serialization routines
+
+    /**
+     * @brief SerializerParams类定义序列化器的配置参数
+     */
+	class LIBCITYGML_EXPORT SerializerParams {
+	public:
+		SerializerParams() {}
+
+		// 格式化选项
+		bool prettyPrint = true;           // 是否格式化输出（缩进、换行）
+		int indentSize = 2;               // 缩进大小（空格数）
+
+										  // 内容选项
+		bool includeAppearances = true;   // 是否包含外观信息（材质、纹理）
+		bool includeAddresses = true;     // 是否包含地址信息
+		bool includeExternalReferences = true; // 是否包含外部引用
+
+											   // 编码选项
+		std::string encoding = "UTF-8";   // XML编码格式
+
+										  // 几何选项
+		bool includeEmptyGeometries = false; // 是否包含空的几何体
+		bool includeLODInfo = true;       // 是否包含LOD信息
+
+										  // 属性选项
+		bool includeGenericAttributes = true; // 是否包含通用属性
+
+											  // 验证选项
+		bool validateOutput = false;      // 是否验证输出XML
+
+										  // 性能选项
+		bool optimizeForSize = false;     // 是否优化文件大小（移除不必要的空白）
+	};
+
+    /**
+     * @brief 将CityModel序列化到文件
+     * @param model 要序列化的CityModel
+     * @param filename 输出文件名
+     * @param params 序列化参数
+     * @param logger 日志记录器
+     * @return 成功返回true，失败返回false
+     */
+    LIBCITYGML_EXPORT bool save(
+        const CityModel& model, 
+        const std::string& filename,
+        const SerializerParams& params = SerializerParams(),
+        std::shared_ptr<CityGMLLogger> logger = nullptr
+    );
+    
+    /**
+     * @brief 将CityModel序列化到输出流
+     * @param model 要序列化的CityModel
+     * @param stream 输出流
+     * @param params 序列化参数
+     * @param logger 日志记录器
+     * @return 成功返回true，失败返回false
+     */
+    LIBCITYGML_EXPORT bool save(
+        const CityModel& model,
+        std::ostream& stream,
+        const SerializerParams& params = SerializerParams(),
+        std::shared_ptr<CityGMLLogger> logger = nullptr
+    );
 
 }

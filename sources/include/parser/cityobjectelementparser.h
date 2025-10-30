@@ -2,8 +2,6 @@
 
 #include <parser/gmlfeaturecollectionparser.h>
 
-#include <citygml/cityobject.h>
-
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
@@ -18,18 +16,18 @@ namespace citygml {
         CityObjectElementParser(CityGMLDocumentParser& documentParser, CityGMLFactory& factory, std::shared_ptr<CityGMLLogger> logger, std::function<void(CityObject*)> callback);
 
         // ElementParser interface
-        std::string elementParserName() const override;
-        bool handlesElement(const NodeType::XMLNode &node) const override;
+        virtual std::string elementParserName() const override;
+        virtual bool handlesElement(const NodeType::XMLNode &node) const override;
     protected:
 
         // CityGMLElementParser interface
-        bool parseElementStartTag(const NodeType::XMLNode& node, Attributes& attributes) override;
-        bool parseElementEndTag(const NodeType::XMLNode& node, const std::string& characters) override;
-        bool parseChildElementStartTag(const NodeType::XMLNode& node, Attributes& attributes) override;
-        bool parseChildElementEndTag(const NodeType::XMLNode& node, const std::string& characters) override;
+        virtual bool parseElementStartTag(const NodeType::XMLNode& node, Attributes& attributes) override;
+        virtual bool parseElementEndTag(const NodeType::XMLNode& node, const std::string& characters) override;
+        virtual bool parseChildElementStartTag(const NodeType::XMLNode& node, Attributes& attributes) override;
+        virtual bool parseChildElementEndTag(const NodeType::XMLNode& node, const std::string& characters) override;
 
         // GMLFeatureCollectionElementParser interface
-        FeatureObject* getFeatureObject() override;
+        virtual FeatureObject* getFeatureObject() override;
 
     private:
         static void initializeTypeIDTypeMap();
@@ -40,8 +38,6 @@ namespace citygml {
         std::function<void(CityObject*)> m_callback;
         std::string m_lastAttributeName;
         AttributeType m_lastAttributeType;
-        CityObjectsTypeMask const m_typeMask; // TODO: Make this a reference once getParserParams doesn't return a copy
-        bool m_skipped;
 
         // The nodes that are valid CityObjects
         static std::mutex initializedTypeIDMutex;

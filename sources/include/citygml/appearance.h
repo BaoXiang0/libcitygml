@@ -6,7 +6,6 @@
 
 #include <citygml/citygml_api.h>
 #include <citygml/object.h>
-#include <citygml/warnings.h>
 #include <citygml/appearancetarget.h>
 
 namespace citygml {
@@ -15,11 +14,8 @@ namespace citygml {
     class Texture;
     class GeoreferencedTexture;
 
-
-    PRAGMA_WARN_DLL_BEGIN
     class LIBCITYGML_EXPORT Appearance : public Object, public std::enable_shared_from_this<Appearance>
     {
-    PRAGMA_WARN_DLL_END
     public:
         std::string getType() const;
 
@@ -41,15 +37,12 @@ namespace citygml {
         void addToTheme(std::string themeName);
         const std::vector<std::string>& getThemes() const;
 
-        ~Appearance() override {}
+        virtual ~Appearance() {}
 
     protected:
         Appearance( const std::string& id, const std::string& typeString );
-        PRAGMA_WARN_DLL_BEGIN
         std::string m_typeString;
         std::vector<std::string> m_themes;
-        PRAGMA_WARN_DLL_END
-
         bool m_isFront;
     };
 

@@ -4,7 +4,6 @@
 
 #include <citygml/object.h>
 #include <citygml/envelope.h>
-#include <citygml/warnings.h>
 
 namespace citygml {
 
@@ -17,12 +16,10 @@ namespace citygml {
         const Envelope& getEnvelope() const;
         void setEnvelope(Envelope* e);
 
-        ~FeatureObject() override;
+        virtual ~FeatureObject();
 
     protected:
-        PRAGMA_WARN_DLL_BEGIN
         std::unique_ptr<Envelope> m_envelope;
-        PRAGMA_WARN_DLL_END
     };
 
 }

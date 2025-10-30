@@ -3,7 +3,6 @@
 #include <citygml/geometry.h>
 #include <citygml/cityobject.h>
 #include <citygml/externalreference.h>
-#include <citygml/warnings.h>
 
 #include <memory>
 
@@ -71,12 +70,10 @@ namespace citygml {
     protected:
         void appearanceTargetCreated(AppearanceTarget* obj);
 
-        PRAGMA_WARN_DLL_BEGIN
         std::shared_ptr<CityGMLLogger> m_logger;
         std::unique_ptr<AppearanceManager> m_appearanceManager;
         std::unique_ptr<PolygonManager> m_polygonManager;
         std::unique_ptr<GeometryManager> m_geometryManager;
-        PRAGMA_WARN_DLL_END
     };
 
 }
